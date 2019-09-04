@@ -19,7 +19,7 @@
 
 ## Usage
 
-First, start OPA server:
+First, start OPA server ([example policy](example/policy.rego)):
 
 ```
 opa run -s policy.rego
