@@ -3,7 +3,7 @@ package main
 import (
 	"log"
 	"os"
-	"github.com/ryotarai/github-api-authz-proxy/pkg/cli"
+	"github.com/ryotarai/github-api-auth-proxy/pkg/cli"
 )
 
 func main() {

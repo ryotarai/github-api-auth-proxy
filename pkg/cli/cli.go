@@ -2,9 +2,9 @@ package cli
 
 import (
 	"flag"
-	"github.com/ryotarai/github-api-authz-proxy/pkg/config"
-	"github.com/ryotarai/github-api-authz-proxy/pkg/handler"
-	"github.com/ryotarai/github-api-authz-proxy/pkg/opa"
+	"github.com/ryotarai/github-api-auth-proxy/pkg/config"
+	"github.com/ryotarai/github-api-auth-proxy/pkg/handler"
+	"github.com/ryotarai/github-api-auth-proxy/pkg/opa"
 	"log"
 	"net/http"
 	"net/url"

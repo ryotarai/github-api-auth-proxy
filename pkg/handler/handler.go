@@ -2,8 +2,8 @@ package handler
 
 import (
 	"fmt"
-	"github.com/ryotarai/github-api-authz-proxy/pkg/config"
-	"github.com/ryotarai/github-api-authz-proxy/pkg/opa"
+	"github.com/ryotarai/github-api-auth-proxy/pkg/config"
+	"github.com/ryotarai/github-api-auth-proxy/pkg/opa"
 	"golang.org/x/crypto/bcrypt"
 	"log"
 	"net/http"
