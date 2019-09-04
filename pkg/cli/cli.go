@@ -2,6 +2,7 @@ package cli
 
 import (
 	"flag"
+	"github.com/ryotarai/github-api-authz-proxy/pkg/config"
 	"github.com/ryotarai/github-api-authz-proxy/pkg/handler"
 	"github.com/ryotarai/github-api-authz-proxy/pkg/opa"
 	"log"
@@ -22,6 +23,7 @@ func (c *CLI) Start(args []string) error {
 	originURLStr := fs.String("origin-url", "", "")
 	opaServerURLStr := fs.String("opa-server-url", "", "")
 	accessToken := fs.String("access-token", "", "")
+	configPath := fs.String("config", "", "")
 
 	err := fs.Parse(args[1:])
 	if err != nil {
@@ -38,9 +40,14 @@ func (c *CLI) Start(args []string) error {
 		return err
 	}
 
+	cfg, err := config.LoadYAMLFile(*configPath)
+	if err != nil {
+		return err
+	}
+
 	authz := opa.NewClient(opaServerURL)
 
-	h, err := handler.New(originURL, *accessToken, authz)
+	h, err := handler.New(cfg, originURL, *accessToken, authz)
 	if err != nil {
 		return err
 	}

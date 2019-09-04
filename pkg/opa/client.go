@@ -25,11 +25,12 @@ type input struct {
 }
 
 type inputInput struct {
-	Method string      `json:"method"`
-	Path   string      `json:"path"`
-	Query  url.Values  `json:"query"`
-	Header http.Header `json:"header"`
-	Body   interface{} `json:"body"`
+	Username string      `json:"username"`
+	Method   string      `json:"method"`
+	Path     string      `json:"path"`
+	Query    url.Values  `json:"query"`
+	Header   http.Header `json:"header"`
+	Body     interface{} `json:"body"`
 }
 
 type output struct {
@@ -40,13 +41,14 @@ type outputResult struct {
 	Allow bool `json:"allow"`
 }
 
-func (c *Client) IsRequestAllowed(r *http.Request) (bool, error) {
+func (c *Client) IsRequestAllowed(username string, r *http.Request) (bool, error) {
 	input := input{
 		Input: inputInput{
-			Method: r.Method,
-			Path:   r.URL.Path,
-			Query:  r.URL.Query(),
-			Header: r.Header,
+			Username: username,
+			Method:   r.Method,
+			Path:     r.URL.Path,
+			Query:    r.URL.Query(),
+			Header:   r.Header,
 		},
 	}
 
