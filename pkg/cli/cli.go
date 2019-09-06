@@ -20,22 +20,9 @@ func New() *CLI {
 func (c *CLI) Start(args []string) error {
 	fs := flag.NewFlagSet(args[0], flag.ContinueOnError)
 	listen := fs.String("listen", ":8080", "")
-	originURLStr := fs.String("origin-url", "", "")
-	opaServerURLStr := fs.String("authz-server-url", "", "")
-	accessToken := fs.String("access-token", "", "")
 	configPath := fs.String("config", "", "")
 
 	err := fs.Parse(args[1:])
-	if err != nil {
-		return err
-	}
-
-	originURL, err := url.Parse(*originURLStr)
-	if err != nil {
-		return err
-	}
-
-	opaServerURL, err := url.Parse(*opaServerURLStr)
 	if err != nil {
 		return err
 	}
@@ -45,9 +32,19 @@ func (c *CLI) Start(args []string) error {
 		return err
 	}
 
+	originURL, err := url.Parse(cfg.OriginURL)
+	if err != nil {
+		return err
+	}
+
+	opaServerURL, err := url.Parse(cfg.OPAServerURL)
+	if err != nil {
+		return err
+	}
+
 	authz := authz.NewOPAClient(opaServerURL)
 
-	h, err := handler.New(cfg, originURL, *accessToken, authz)
+	h, err := handler.New(cfg, originURL, cfg.AccessToken, authz)
 	if err != nil {
 		return err
 	}
