@@ -1,3 +1,6 @@
+originURL: 'https://api.github.com'
+opaServerURL: 'http://localhost:8181'
+accessToken: 'your personal access token'
 passwords:
   user1:
-  - '$2a$12$j0mFVW4Ccx3AV8I1URRq.uB.7cziHxnLdIrSjrpRcwJKfDLEw410W' # bcrypt("password")
+    - '$2a$12$j0mFVW4Ccx3AV8I1URRq.uB.7cziHxnLdIrSjrpRcwJKfDLEw410W' # bcrypt("password")
