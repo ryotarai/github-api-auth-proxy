@@ -72,33 +72,4 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	r.Host = h.originURL.Host
 
 	httputil.NewSingleHostReverseProxy(h.originURL).ServeHTTP(w, r)
-
-	//r.URL.Scheme = h.originURL.Scheme
-	//r.URL.Host = h.originURL.Host
-	//r.URL.Path = path.Join(h.originURL.Path, r.URL.Path)
-	//r.RequestURI = ""
-	//
-	//resp, err := http.DefaultClient.Do(r)
-	//if err != nil {
-	//	log.Printf("ERR: %s", err)
-	//	w.WriteHeader(http.StatusBadGateway)
-	//	return
-	//}
-	//defer resp.Body.Close()
-	//
-	//w.WriteHeader(resp.StatusCode)
-	//
-	//header := w.Header()
-	//for k, vs := range resp.Header {
-	//	for _, v := range vs {
-	//		header.Add(k, v)
-	//	}
-	//}
-	//
-	//_, err = io.Copy(w, resp.Body)
-	//if err != nil {
-	//	log.Printf("ERR: %s", err)
-	//	w.WriteHeader(http.StatusInternalServerError)
-	//	return
-	//}
 }
