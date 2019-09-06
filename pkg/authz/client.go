@@ -1,4 +1,4 @@
-package opa
+package authz
 
 import (
 	"bytes"
@@ -10,12 +10,16 @@ import (
 	"path"
 )
 
-type Client struct {
+type Client interface {
+	IsRequestAllowed(username string, r *http.Request) (bool, error)
+}
+
+type OPAClient struct {
 	serverURL *url.URL
 }
 
-func NewClient(serverURL *url.URL) *Client {
-	return &Client{
+func NewOPAClient(serverURL *url.URL) *OPAClient {
+	return &OPAClient{
 		serverURL: serverURL,
 	}
 }
@@ -41,7 +45,7 @@ type outputResult struct {
 	Allow bool `json:"allow"`
 }
 
-func (c *Client) IsRequestAllowed(username string, r *http.Request) (bool, error) {
+func (c *OPAClient) IsRequestAllowed(username string, r *http.Request) (bool, error) {
 	input := input{
 		Input: inputInput{
 			Username: username,

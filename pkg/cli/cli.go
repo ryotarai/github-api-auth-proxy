@@ -4,7 +4,7 @@ import (
 	"flag"
 	"github.com/ryotarai/github-api-auth-proxy/pkg/config"
 	"github.com/ryotarai/github-api-auth-proxy/pkg/handler"
-	"github.com/ryotarai/github-api-auth-proxy/pkg/opa"
+	"github.com/ryotarai/github-api-auth-proxy/pkg/authz"
 	"log"
 	"net/http"
 	"net/url"
@@ -21,7 +21,7 @@ func (c *CLI) Start(args []string) error {
 	fs := flag.NewFlagSet(args[0], flag.ContinueOnError)
 	listen := fs.String("listen", ":8080", "")
 	originURLStr := fs.String("origin-url", "", "")
-	opaServerURLStr := fs.String("opa-server-url", "", "")
+	opaServerURLStr := fs.String("authz-server-url", "", "")
 	accessToken := fs.String("access-token", "", "")
 	configPath := fs.String("config", "", "")
 
@@ -45,7 +45,7 @@ func (c *CLI) Start(args []string) error {
 		return err
 	}
 
-	authz := opa.NewClient(opaServerURL)
+	authz := authz.NewOPAClient(opaServerURL)
 
 	h, err := handler.New(cfg, originURL, *accessToken, authz)
 	if err != nil {

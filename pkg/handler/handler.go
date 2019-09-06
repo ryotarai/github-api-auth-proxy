@@ -3,7 +3,7 @@ package handler
 import (
 	"fmt"
 	"github.com/ryotarai/github-api-auth-proxy/pkg/config"
-	"github.com/ryotarai/github-api-auth-proxy/pkg/opa"
+	"github.com/ryotarai/github-api-auth-proxy/pkg/authz"
 	"golang.org/x/crypto/bcrypt"
 	"log"
 	"net/http"
@@ -15,10 +15,10 @@ type Handler struct {
 	config      *config.Config
 	originURL   *url.URL
 	accessToken string
-	authz       *opa.Client
+	authz       authz.Client
 }
 
-func New(config *config.Config, originURL *url.URL, accessToken string, authz *opa.Client) (*Handler, error) {
+func New(config *config.Config, originURL *url.URL, accessToken string, authz authz.Client) (*Handler, error) {
 	return &Handler{
 		config:      config,
 		originURL:   originURL,
