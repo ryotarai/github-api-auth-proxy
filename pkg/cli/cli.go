@@ -23,7 +23,6 @@ func New() *CLI {
 
 func (c *CLI) Start(args []string) error {
 	fs := flag.NewFlagSet(args[0], flag.ContinueOnError)
-	listen := fs.String("listen", ":8080", "")
 	configPath := fs.String("config", "", "")
 	bcryptMode := fs.Bool("bcrypt", false, "")
 
@@ -57,8 +56,8 @@ func (c *CLI) Start(args []string) error {
 		return err
 	}
 
-	log.Printf("INFO: Listening on %s", *listen)
-	err = http.ListenAndServe(*listen, h)
+	log.Printf("INFO: Listening on %s", cfg.ListenAddr)
+	err = http.ListenAndServe(cfg.ListenAddr, h)
 	if err != nil {
 		return err
 	}

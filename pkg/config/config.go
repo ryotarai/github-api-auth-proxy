@@ -6,6 +6,7 @@ import (
 )
 
 type Config struct {
+	ListenAddr    string              `yaml:"listenAddr"`
 	OriginURL     string              `yaml:"originURL"`
 	OPAPolicyFile string              `yaml:"opaPolicyFile"`
 	AccessToken   string              `yaml:"accessToken"`
