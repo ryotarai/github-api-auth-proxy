@@ -9,7 +9,7 @@ COPY . /workspace
 
 RUN GO111MODULE=on go build -o out .
 
-FROM gcr.io/distroless/static:latest
+FROM ubuntu:18.04
 WORKDIR /
 COPY --from=builder /workspace/out /usr/local/bin/github-api-auth-proxy
 ENTRYPOINT ["/usr/local/bin/github-api-auth-proxy"]
