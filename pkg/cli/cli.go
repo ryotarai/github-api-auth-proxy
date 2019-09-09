@@ -47,12 +47,10 @@ func (c *CLI) Start(args []string) error {
 		return err
 	}
 
-	opaServerURL, err := url.Parse(cfg.OPAServerURL)
+	authz, err := authz.NewOPAClient(cfg.OPAPolicyFile)
 	if err != nil {
 		return err
 	}
-
-	authz := authz.NewOPAClient(opaServerURL)
 
 	h, err := handler.New(cfg, originURL, cfg.AccessToken, authz)
 	if err != nil {

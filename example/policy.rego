@@ -1,7 +1,4 @@
-package httpapi.authz
-
-# HTTP API request
-import input
+package github.authz
 
 default allow = false
 

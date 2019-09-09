@@ -1,5 +1,5 @@
 originURL: 'https://api.github.com'
-opaServerURL: 'http://localhost:8181'
+opaPolicyFile: 'example/policy.rego'
 accessToken: 'your personal access token'
 passwords:
   user1:

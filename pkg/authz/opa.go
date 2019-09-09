@@ -1,101 +1,59 @@
 package authz
 
 import (
-	"bytes"
-	"encoding/json"
+	"context"
 	"fmt"
+	"github.com/open-policy-agent/opa/rego"
 	"io/ioutil"
-	"log"
 	"net/http"
-	"net/url"
-	"path"
 )
 
 type OPAClient struct {
-	serverURL *url.URL
+	policyFile string
+	policyBody string
 }
 
-func NewOPAClient(serverURL *url.URL) *OPAClient {
-	return &OPAClient{
-		serverURL: serverURL,
+func NewOPAClient(policyFile string) (*OPAClient, error) {
+	bs, err := ioutil.ReadFile(policyFile)
+	if err != nil {
+		return nil, err
 	}
-}
 
-type input struct {
-	Input inputInput `json:"input"`
-}
-
-type inputInput struct {
-	Username string      `json:"username"`
-	Method   string      `json:"method"`
-	Path     string      `json:"path"`
-	Query    url.Values  `json:"query"`
-	Header   http.Header `json:"header"`
-	Body     interface{} `json:"body"`
-}
-
-type output struct {
-	Result outputResult `json:"result"`
-}
-
-type outputResult struct {
-	Allow bool `json:"allow"`
+	return &OPAClient{
+		policyFile: policyFile,
+		policyBody: string(bs),
+	}, nil
 }
 
 func (c *OPAClient) IsRequestAllowed(username string, r *http.Request) (bool, error) {
-	input := input{
-		Input: inputInput{
-			Username: username,
-			Method:   r.Method,
-			Path:     r.URL.Path,
-			Query:    r.URL.Query(),
-			Header:   r.Header,
-		},
+	input := map[string]interface{}{
+		"username": username,
+		"method":   r.Method,
+		"path":     r.URL.Path,
+		"query":    r.URL.Query(),
+		"header":   r.Header,
 	}
 
-	bodyBytes, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		return false, err
-	}
-	r.Body.Close()
-	r.Body = ioutil.NopCloser(bytes.NewReader(bodyBytes))
+	eval := rego.New(
+		rego.Query("data.github.authz.allow"),
+		rego.Input(input),
+		rego.Module(c.policyFile, c.policyBody),
+	)
 
-	if len(bodyBytes) > 0 {
-		body := map[string]interface{}{}
-		err = json.Unmarshal(bodyBytes, &body)
-		if err != nil {
-			return false, err
-		}
-
-		input.Input.Body = body
-	}
-
-	log.Printf("DEBUG: Input to OPA: %+v", input)
-
-	u := *c.serverURL
-	u.Path = path.Join(u.Path, "v1/data/httpapi/authz")
-
-	inputJSON, err := json.Marshal(input)
-	if err != nil {
-		return false, err
-	}
-	body := bytes.NewReader(inputJSON)
-
-	resp, err := http.Post(u.String(), "application/json", body)
+	rs, err := eval.Eval(context.TODO())
 	if err != nil {
 		return false, err
 	}
 
-	if resp.StatusCode != http.StatusOK {
-		return false, fmt.Errorf("response is not 200")
+	if len(rs) == 0 {
+		return false, fmt.Errorf("decision is undefined")
 	}
 
-	out := output{}
-	err = json.NewDecoder(resp.Body).Decode(&out)
-	if err != nil {
-		return false, err
+	fmt.Printf("%+v\n", rs)
+	allowed, ok := rs[0].Expressions[0].Value.(bool)
+	if !ok {
+		return false, fmt.Errorf("invalid policy")
 	}
-	log.Printf("DEBUG: Output from OPA: %+v", out)
 
-	return out.Result.Allow, nil
+	return allowed, nil
 }

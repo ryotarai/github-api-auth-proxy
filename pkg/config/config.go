@@ -6,10 +6,10 @@ import (
 )
 
 type Config struct {
-	OriginURL    string              `yaml:"originURL"`
-	OPAServerURL string              `yaml:"opaServerURL"`
-	AccessToken  string              `yaml:"accessToken"`
-	Passwords    map[string][]string `yaml:"passwords"` // username: [bcrypted password...]
+	OriginURL     string              `yaml:"originURL"`
+	OPAPolicyFile string              `yaml:"opaPolicyFile"`
+	AccessToken   string              `yaml:"accessToken"`
+	Passwords     map[string][]string `yaml:"passwords"` // username: [bcrypted password...]
 }
 
 func LoadYAMLFile(path string) (*Config, error) {
