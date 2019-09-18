@@ -3,6 +3,7 @@ package config
 import (
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
+	"os"
 )
 
 type Config struct {
@@ -25,5 +26,13 @@ func LoadYAMLFile(path string) (*Config, error) {
 		return nil, err
 	}
 
+	config.LoadFromEnv()
+
 	return config, nil
+}
+
+func (c *Config) LoadFromEnv() {
+	if accessToken := os.Getenv("GHPROXY_ACCESS_TOKEN"); accessToken != "" {
+		c.AccessToken = accessToken
+	}
 }
