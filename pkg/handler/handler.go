@@ -45,19 +45,11 @@ func (h *Handler) authn(username, password string) bool {
 }
 
 func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	var username string
-	var password string
-
-	var ok bool
-	username, password, ok = r.BasicAuth()
-
+	username, password, ok := getCredFromRequest(r)
 	if !ok {
-		username, password, ok = getCredFromAuthorizationToken(r)
-		if !ok {
-			log.Println("WARN: Failed to get both Basic Auth credential and Authorization token")
-			w.WriteHeader(http.StatusUnauthorized)
-			return
-		}
+		log.Println("WARN: Failed to get both Basic Auth credential and Authorization token")
+		w.WriteHeader(http.StatusUnauthorized)
+		return
 	}
 
 	if !h.authn(username, password) {
@@ -82,13 +74,32 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	httputil.NewSingleHostReverseProxy(h.originURL).ServeHTTP(w, r)
 }
 
-func getCredFromAuthorizationToken(r *http.Request) (username string, password string, ok bool) {
+func getCredFromRequest(r *http.Request) (username string, password string, ok bool) {
+	username, password, ok = r.BasicAuth()
+	if ok {
+		return
+	}
+
+	username, password, ok = getCredFromAuthorizationToken(r, "token")
+	if ok {
+		return
+	}
+
+	username, password, ok = getCredFromAuthorizationToken(r, "bearer")
+	if ok {
+		return
+	}
+
+	return
+}
+
+func getCredFromAuthorizationToken(r *http.Request, authType string) (username string, password string, ok bool) {
 	auth := r.Header.Get("Authorization")
 	if auth == "" {
 		return
 	}
 
-	const prefix = "token "
+	prefix := fmt.Sprintf("%s ", authType)
 	if len(auth) < len(prefix) || !strings.EqualFold(auth[:len(prefix)], prefix) {
 		return
 	}
