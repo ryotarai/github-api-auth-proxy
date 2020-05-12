@@ -2,13 +2,14 @@ package handler
 
 import (
 	"fmt"
-	"github.com/ryotarai/github-api-auth-proxy/pkg/config"
 	"github.com/ryotarai/github-api-auth-proxy/pkg/authz"
+	"github.com/ryotarai/github-api-auth-proxy/pkg/config"
 	"golang.org/x/crypto/bcrypt"
 	"log"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
+	"strings"
 )
 
 type Handler struct {
@@ -44,12 +45,19 @@ func (h *Handler) authn(username, password string) bool {
 }
 
 func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	username, password, ok := r.BasicAuth()
+	var username string
+	var password string
+
+	var ok bool
+	username, password, ok = r.BasicAuth()
 
 	if !ok {
-		log.Println("WARN: Failed to get Basic Auth credential")
-		w.WriteHeader(http.StatusUnauthorized)
-		return
+		username, password, ok = getCredFromAuthorizationToken(r)
+		if !ok {
+			log.Println("WARN: Failed to get both Basic Auth credential and Authorization token")
+			w.WriteHeader(http.StatusUnauthorized)
+			return
+		}
 	}
 
 	if !h.authn(username, password) {
@@ -72,4 +80,21 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	r.Host = h.originURL.Host
 
 	httputil.NewSingleHostReverseProxy(h.originURL).ServeHTTP(w, r)
+}
+
+func getCredFromAuthorizationToken(r *http.Request) (username string, password string, ok bool) {
+	auth := r.Header.Get("Authorization")
+	if auth == "" {
+		return
+	}
+
+	const prefix = "token "
+	if len(auth) < len(prefix) || !strings.EqualFold(auth[:len(prefix)], prefix) {
+		return
+	}
+	usernamePassword := strings.SplitN(auth[len(prefix):], ":", 2)
+	if len(usernamePassword) < 2 {
+		return
+	}
+	return usernamePassword[0], usernamePassword[1], true
 }
