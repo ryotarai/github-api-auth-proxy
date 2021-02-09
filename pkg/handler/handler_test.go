@@ -1,16 +1,18 @@
 package handler
 
 import (
+	"encoding/base64"
 	"fmt"
-	"github.com/ryotarai/github-api-auth-proxy/pkg/config"
-	"github.com/stretchr/testify/assert"
-	"golang.org/x/crypto/bcrypt"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
 	"strings"
 	"testing"
+
+	"github.com/ryotarai/github-api-auth-proxy/pkg/config"
+	"github.com/stretchr/testify/assert"
+	"golang.org/x/crypto/bcrypt"
 )
 
 type dummyAuthz struct {
@@ -22,7 +24,7 @@ func (a dummyAuthz) IsRequestAllowed(username string, r *http.Request) (bool, er
 }
 
 func dummyOrigin() http.Handler {
-	return http.HandlerFunc(func (w http.ResponseWriter, r *http.Request) {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(200)
 		fmt.Fprintf(w, "Authorization: %s\nMethod: %s\nPath: %s\n",
 			r.Header.Get("Authorization"),
@@ -52,19 +54,64 @@ func TestServeHTTP(t *testing.T) {
 	h, err := New(cfg, originURL, accessToken, authz)
 	assert.NoError(t, err)
 
-	cases := []struct{
+	cases := []struct {
+		reqFunc  func() *http.Request
 		password string
-		code int
-		body string
+		code     int
+		body     string
 	}{
-		{password: "password1", code: 200, body: "Authorization: token THISISACCESSTOKEN\nMethod: POST\nPath: /a/b/c\n"},
-		{password: "invalid", code: 401, body: ""},
+		// Token
+		{
+			reqFunc: func() *http.Request {
+				r := httptest.NewRequest("GET", "/api/v3/user", strings.NewReader(""))
+				r.Header.Set("Authorization", fmt.Sprintf("token %s", "user1:password1"))
+				return r
+			},
+			code: 200,
+			body: fmt.Sprintf("Authorization: token " + accessToken + "\nMethod: GET\nPath: /api/v3/user\n"),
+		},
+		{
+			reqFunc: func() *http.Request {
+				r := httptest.NewRequest("GET", "/api/v3/user", strings.NewReader(""))
+				r.Header.Set("Authorization", fmt.Sprintf("bearer %s", "user1:password1"))
+				return r
+			},
+			code: 200,
+			body: fmt.Sprintf("Authorization: token " + accessToken + "\nMethod: GET\nPath: /api/v3/user\n"),
+		},
+		{
+			reqFunc: func() *http.Request {
+				r := httptest.NewRequest("GET", "/api/v3/user", strings.NewReader(""))
+				r.Header.Set("Authorization", fmt.Sprintf("bearer %s", "invalid"))
+				return r
+			},
+			code: 401,
+			body: "",
+		},
+		// Basic Authorization
+		{
+			reqFunc: func() *http.Request {
+				r := httptest.NewRequest("POST", "/a/b/c", strings.NewReader(""))
+				r.SetBasicAuth("user1", "password1")
+				return r
+			},
+			code: 200,
+			body: fmt.Sprintf("Authorization: Basic %s\nMethod: POST\nPath: /a/b/c\n", base64.StdEncoding.EncodeToString([]byte(accessToken+":x-oauth-basic"))),
+		},
+		{
+			reqFunc: func() *http.Request {
+				r := httptest.NewRequest("POST", "/a/b/c", strings.NewReader(""))
+				r.SetBasicAuth("user1", "invalid")
+				return r
+			},
+			code: 401,
+			body: "",
+		},
 	}
 
 	for _, c := range cases {
 		w := httptest.NewRecorder()
-		r := httptest.NewRequest("POST", "/a/b/c", strings.NewReader(""))
-		r.SetBasicAuth("user1", c.password)
+		r := c.reqFunc()
 		h.ServeHTTP(w, r)
 		out, err := ioutil.ReadAll(w.Body)
 		assert.NoError(t, err)
