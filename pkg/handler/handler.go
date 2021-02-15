@@ -48,7 +48,7 @@ func (h *Handler) authn(username, password string) bool {
 func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	username, password, ok := getCredFromRequest(r)
 	if !ok {
-		log.Println("WARN: Failed to get both Basic Auth credential and Authorization token")
+		log.Printf("WARN: Failed to get both Basic Auth credential and Authorization token, url: %s\n", r.URL)
 		w.WriteHeader(http.StatusUnauthorized)
 		return
 	}
@@ -60,11 +60,12 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	allowed, err := h.authz.IsRequestAllowed(username, r)
 	if err != nil {
-		log.Printf("ERR: %s", err)
+		log.Printf("ERR: %s\n", err)
 		w.WriteHeader(http.StatusUnauthorized)
 		return
 	}
 	if !allowed {
+		log.Printf("WARN: request was not allowed, url: %s, username: %s\n", r.URL, username)
 		w.WriteHeader(http.StatusUnauthorized)
 		return
 	}
