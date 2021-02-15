@@ -2,14 +2,15 @@ package handler
 
 import (
 	"fmt"
-	"github.com/ryotarai/github-api-auth-proxy/pkg/authz"
-	"github.com/ryotarai/github-api-auth-proxy/pkg/config"
-	"golang.org/x/crypto/bcrypt"
 	"log"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
 	"strings"
+
+	"github.com/ryotarai/github-api-auth-proxy/pkg/authz"
+	"github.com/ryotarai/github-api-auth-proxy/pkg/config"
+	"golang.org/x/crypto/bcrypt"
 )
 
 type Handler struct {
@@ -68,7 +69,12 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	r.Header.Set("Authorization", fmt.Sprintf("token %s", h.accessToken))
+	if strings.HasPrefix(r.Header.Get("Authorization"), "Basic ") {
+		// https://github.blog/2012-09-21-easier-builds-and-deployments-using-git-over-https-and-oauth/
+		r.SetBasicAuth(h.accessToken, "x-oauth-basic")
+	} else {
+		r.Header.Set("Authorization", fmt.Sprintf("token %s", h.accessToken))
+	}
 	r.Host = h.originURL.Host
 
 	httputil.NewSingleHostReverseProxy(h.originURL).ServeHTTP(w, r)
